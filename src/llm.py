@@ -1,6 +1,8 @@
 import os
+import socket
 from dotenv import load_dotenv
 from google import genai
+from google.genai import types
 
 load_dotenv()
 
@@ -9,7 +11,48 @@ api_key = os.getenv("GEMINI_API_KEY")
 if not api_key:
     raise ValueError("GEMINI_API_KEY is not set in .env")
 
-client = genai.Client(api_key=api_key)
+
+# =========================================================
+# FORCE IPV4 CONNECTION
+# =========================================================
+
+_original_getaddrinfo = socket.getaddrinfo
+
+
+def ipv4_only_getaddrinfo(
+    host,
+    port,
+    family=0,
+    type=0,
+    proto=0,
+    flags=0
+):
+    return _original_getaddrinfo(
+        host,
+        port,
+        socket.AF_INET,
+        type,
+        proto,
+        flags
+    )
+
+
+socket.getaddrinfo = ipv4_only_getaddrinfo
+
+
+# =========================================================
+# GEMINI CLIENT
+# =========================================================
+
+client = genai.Client(
+    api_key=api_key,
+    http_options=types.HttpOptions(
+        timeout=10000,
+        retry_options=types.HttpRetryOptions(
+            attempts=1
+        )
+    )
+)
 
 MODEL = "gemini-3.5-flash-lite"
 
