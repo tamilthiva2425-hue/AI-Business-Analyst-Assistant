@@ -1,0 +1,22 @@
+# Environment variables and secrets
+.env
+
+# Python virtual environment
+venv/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Pytest cache
+.pytest_cache/
+
+# Streamlit cache
+.streamlit/
+
+# IDE files
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
