@@ -1,255 +1,191 @@
-import plotly.express as px
+import os
 import pandas as pd
+import plotly.express as px
 
 
-def create_chart(df, question):
+def detect_chart_type(df, question):
+    """
+    Automatically chooses the most suitable visualization
+    based on the business question and query result.
+    """
 
-    if df is None or df.empty:
-        return None
+    question = question.lower().strip()
 
-    question_lower = question.lower()
-    columns = df.columns.tolist()
+    # Single result → KPI-style bar chart
+    if len(df) == 1:
+        return "bar"
 
-    # ---------------------------------------------------------
-    # CLEAN COLUMN NAMES
-    # ---------------------------------------------------------
-
-    df = df.copy()
-
-    # Try to identify date column
-    date_column = None
-
-    for column in columns:
-
-        if any(word in column.lower() for word in [
-            "date",
-            "month",
-            "year",
-            "time"
-        ]):
-
-            try:
-                df[column] = pd.to_datetime(
-                    df[column]
-                )
-
-                date_column = column
-                break
-
-            except Exception:
-                pass
-
-
-    # ---------------------------------------------------------
-    # IDENTIFY NUMERIC COLUMN
-    # ---------------------------------------------------------
-
-    numeric_columns = df.select_dtypes(
-        include="number"
-    ).columns.tolist()
-
-    # Remove obvious ID columns
-    numeric_columns = [
-        col for col in numeric_columns
-        if "id" not in col.lower()
-    ]
-
-
-    # ---------------------------------------------------------
-    # DATE / TREND QUESTIONS
-    # ---------------------------------------------------------
-
-    trend_words = [
-        "trend",
-        "over time",
+    # Time-based questions → line chart
+    time_words = [
         "monthly",
         "month",
+        "daily",
+        "day",
+        "weekly",
+        "week",
         "yearly",
         "year",
-        "daily",
-        "daily trend",
+        "trend",
+        "over time",
         "growth"
     ]
 
-    is_trend_question = any(
-        word in question_lower
-        for word in trend_words
-    )
+    if any(word in question for word in time_words):
+        return "line"
 
-    if (
-        is_trend_question
-        and date_column is not None
-        and numeric_columns
-    ):
-
-        y_column = numeric_columns[0]
-
-        df = df.sort_values(
-            date_column
-        )
-
-        fig = px.line(
-            df,
-            x=date_column,
-            y=y_column,
-            markers=True,
-            title=question
-        )
-
-        fig.update_layout(
-            template="plotly_white",
-            xaxis_title=date_column.replace(
-                "_", " "
-            ).title(),
-            yaxis_title=y_column.replace(
-                "_", " "
-            ).title(),
-            hovermode="x unified"
-        )
-
-        return fig
-
-
-    # ---------------------------------------------------------
-    # PIE / SHARE QUESTIONS
-    # ---------------------------------------------------------
-
-    pie_words = [
-        "share",
+    # Distribution / share questions → donut
+    distribution_words = [
+        "distribution",
         "percentage",
         "percent",
-        "distribution",
+        "share",
         "proportion",
         "breakdown"
     ]
 
-    is_pie_question = any(
-        word in question_lower
-        for word in pie_words
-    )
+    if any(word in question for word in distribution_words):
+        return "donut"
 
-    if (
-        is_pie_question
-        and len(columns) >= 2
-    ):
+    # Ranking questions → bar
+    ranking_words = [
+        "top",
+        "bottom",
+        "highest",
+        "lowest",
+        "best",
+        "worst",
+        "rank"
+    ]
 
-        category = columns[0]
+    if any(word in question for word in ranking_words):
+        return "bar"
 
-        value_candidates = [
-            col for col in columns[1:]
-            if pd.api.types.is_numeric_dtype(
-                df[col]
-            )
-        ]
+    # Find categorical and numeric columns
+    numeric_columns = df.select_dtypes(
+        include=["number"]
+    ).columns.tolist()
 
-        if value_candidates:
+    categorical_columns = df.select_dtypes(
+        exclude=["number"]
+    ).columns.tolist()
 
-            value = value_candidates[0]
+    # Two useful columns → bar
+    if len(categorical_columns) >= 1 and len(numeric_columns) >= 1:
+        return "bar"
 
-            fig = px.pie(
-                df,
-                names=category,
-                values=value,
-                title=question,
-                hole=0.35
-            )
+    return "table"
 
-            fig.update_layout(
-                template="plotly_white"
-            )
 
-            return fig
+def create_chart(df, question):
+    """
+    Create an automatic business visualization.
+    """
 
+    if df is None or df.empty:
+        return None
+
+    chart_type = detect_chart_type(df, question)
+
+    numeric_columns = df.select_dtypes(
+        include=["number"]
+    ).columns.tolist()
+
+    categorical_columns = df.select_dtypes(
+        exclude=["number"]
+    ).columns.tolist()
 
     # ---------------------------------------------------------
     # BAR CHART
     # ---------------------------------------------------------
 
-    if len(columns) >= 2:
+    if chart_type == "bar":
 
-        category_column = columns[0]
+        if categorical_columns and numeric_columns:
 
-        # Find numeric metric
-        metric_candidates = [
-            col for col in columns[1:]
-            if pd.api.types.is_numeric_dtype(
-                df[col]
-            )
-        ]
-
-        if metric_candidates:
-
-            metric_column = metric_candidates[0]
-
-        elif numeric_columns:
-
-            metric_column = numeric_columns[0]
-
-        else:
-
-            metric_column = columns[1]
-
-
-        # Sort descending for business comparisons
-        if pd.api.types.is_numeric_dtype(
-            df[metric_column]
-        ):
-
-            df = df.sort_values(
-                metric_column,
-                ascending=False
-            )
-
-
-        fig = px.bar(
-            df,
-            x=category_column,
-            y=metric_column,
-            title=question,
-            text_auto=True
-        )
-
-        fig.update_layout(
-            template="plotly_white",
-            xaxis_title=category_column.replace(
-                "_", " "
-            ).title(),
-            yaxis_title=metric_column.replace(
-                "_", " "
-            ).title(),
-            hovermode="x unified"
-        )
-
-        return fig
-
-
-    # ---------------------------------------------------------
-    # SINGLE NUMERIC RESULT
-    # ---------------------------------------------------------
-
-    if len(columns) == 1:
-
-        column = columns[0]
-
-        if pd.api.types.is_numeric_dtype(
-            df[column]
-        ):
+            x_column = categorical_columns[0]
+            y_column = numeric_columns[0]
 
             fig = px.bar(
                 df,
-                y=column,
+                x=x_column,
+                y=y_column,
                 title=question,
-                text_auto=True
+                text=y_column
+            )
+
+            fig.update_traces(
+                texttemplate="%{text:,.0f}",
+                textposition="inside"
             )
 
             fig.update_layout(
                 template="plotly_white",
-                yaxis_title=column.replace(
-                    "_", " "
-                ).title()
+                height=500,
+                xaxis_title=x_column.replace("_", " ").title(),
+                yaxis_title=y_column.replace("_", " ").title(),
+                title_x=0
             )
 
             return fig
 
+    # ---------------------------------------------------------
+    # LINE CHART
+    # ---------------------------------------------------------
+
+    if chart_type == "line":
+
+        if categorical_columns and numeric_columns:
+
+            x_column = categorical_columns[0]
+            y_column = numeric_columns[0]
+
+            fig = px.line(
+                df,
+                x=x_column,
+                y=y_column,
+                title=question,
+                markers=True
+            )
+
+            fig.update_layout(
+                template="plotly_white",
+                height=500,
+                xaxis_title=x_column.replace("_", " ").title(),
+                yaxis_title=y_column.replace("_", " ").title(),
+                title_x=0
+            )
+
+            return fig
+
+    # ---------------------------------------------------------
+    # DONUT CHART
+    # ---------------------------------------------------------
+
+    if chart_type == "donut":
+
+        if categorical_columns and numeric_columns:
+
+            label_column = categorical_columns[0]
+            value_column = numeric_columns[0]
+
+            fig = px.pie(
+                df,
+                names=label_column,
+                values=value_column,
+                hole=0.55,
+                title=question
+            )
+
+            fig.update_layout(
+                template="plotly_white",
+                height=500,
+                title_x=0
+            )
+
+            return fig
+
+    # ---------------------------------------------------------
+    # FALLBACK TABLE
+    # ---------------------------------------------------------
 
     return None

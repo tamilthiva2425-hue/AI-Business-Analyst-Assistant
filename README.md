@@ -2,8 +2,6 @@
 
 An AI-powered business analytics application that allows users to ask business questions in natural language and receive SQL queries, database results, visualizations, and business insights.
 
----
-
 ## 📌 Project Overview
 
 Business users often depend on analysts for repetitive data queries and reporting tasks.
@@ -11,8 +9,6 @@ Business users often depend on analysts for repetitive data queries and reportin
 This project demonstrates an AI-assisted business analytics workflow where a user can ask a question in natural language, Gemini generates the required SQL query, the query is validated for safety, data is retrieved from MySQL, an appropriate visualization is generated automatically, and business insights are produced from the results.
 
 The project also includes Power BI dashboards built using the same business data for interactive business reporting and analysis.
-
----
 
 ## 🎯 Business Problem
 
@@ -28,8 +24,6 @@ Business teams frequently need answers to questions such as:
 Answering these questions manually can require repeated SQL queries, data preparation, analysis, and report creation.
 
 The AI Business Analyst Assistant streamlines this analytical workflow.
-
----
 
 ## 💡 Solution
 
@@ -71,8 +65,6 @@ The AI analyst application follows this workflow:
 
 Power BI is used separately as the business intelligence and dashboarding layer using the same business data.
 
----
-
 ## 🚀 Key Features
 
 ### 1. Natural Language Business Queries
@@ -83,15 +75,11 @@ Example:
 
 > Which region generated the highest revenue?
 
----
-
 ### 2. AI-Powered SQL Generation
 
 Gemini converts the user's natural-language business question into a SQL query based on the available business data.
 
 The application understands the project database structure and generates queries for business analysis.
-
----
 
 ### 3. SQL Safety Validation
 
@@ -126,8 +114,6 @@ It also blocks:
 
 This provides a basic safety layer before executing AI-generated SQL against the database.
 
----
-
 ### 4. MySQL Data Retrieval
 
 Validated queries are executed against the MySQL database:
@@ -135,8 +121,6 @@ Validated queries are executed against the MySQL database:
 `business_analytics`
 
 The application retrieves the required business data and displays the query results to the user.
-
----
 
 ### 5. Automatic Visualization
 
@@ -157,8 +141,6 @@ Examples:
 - Revenue distribution by region → Donut chart
 - Top products by revenue → Bar chart
 
----
-
 ### 6. AI Business Analysis
 
 After retrieving the data, Gemini generates business-oriented analysis consisting of:
@@ -167,9 +149,7 @@ After retrieving the data, Gemini generates business-oriented analysis consistin
 2. Key Business Insight
 3. Business Recommendation
 
-This moves the application beyond simply displaying numbers and helps translate analytical results into business meaning.
-
----
+This moves the application beyond simply displaying numbers and helps translate analytical results into business meaning
 
 ### 7. Power BI Dashboards
 
@@ -210,8 +190,6 @@ Natural Language → Gemini → SQL → MySQL → Plotly → Business Insight
 
 Business Data → Power BI → Interactive Dashboards
 
----
-
 ## 🛠️ Technology Stack
 
 | Technology | Usage |
@@ -226,8 +204,6 @@ Business Data → Power BI → Interactive Dashboards
 | Pandas | Data cleaning and processing |
 | NumPy | Data processing |
 | Pytest | Automated testing |
-
----
 
 ## 🗄️ Database
 
